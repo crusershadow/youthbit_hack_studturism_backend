@@ -70,7 +70,7 @@ class StudturismSiteReflector:
                     dor_visit_min_max_days=[d.details.main_info.min_days, d.details.main_info.max_days],
                     dor_lat=d.details.main_info.coordinates.lat,
                     dor_lng=d.details.main_info.coordinates.lng,
-                    dor_photos_link=d.details.main_info.photos,
+                    dor_photos_links=d.details.main_info.photos,
                     dor_documents_links=d.details.documents
                 ) for d in dormitories
             ]

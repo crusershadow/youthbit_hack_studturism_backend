@@ -19,7 +19,7 @@ class DormitoryMainInfo(BaseModel):
     coordinates: DormitoryCoordinates
     min_days: int = Field(alias='minDays')
     max_days: int = Field(alias='maxDays')
-    photos: Tuple[str, ...]
+    photos: List[str]
     meal_plan: str = Field(alias='mealPlan')
 
 
