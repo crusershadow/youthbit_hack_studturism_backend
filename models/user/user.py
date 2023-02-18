@@ -4,7 +4,7 @@ from pydantic import Field, BaseModel
 
 from datetime import date
 
-from .._base_model import BaseStudturismModel
+
 
 
 class UserCreate(BaseModel):
@@ -12,7 +12,7 @@ class UserCreate(BaseModel):
     password: str
 
 
-class User(BaseStudturismModel):
+class User(BaseModel):
     user_id: int
     email: str
     password_hash: str
