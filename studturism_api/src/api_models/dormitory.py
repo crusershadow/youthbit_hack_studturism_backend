@@ -71,13 +71,6 @@ class Dormitory(BaseModel):
     rooms: Dict[str, Room]
     on_moderation: bool = Field(alias='onModeration')
 
-    def __init__(self, **data):
-        try:
-            super().__init__(**data)
-        except Exception as err:
-            from pprint import pprint
-            pprint(data)
-            raise err
 
 
 

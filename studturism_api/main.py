@@ -26,7 +26,7 @@ class StudturismAPI:
         response = await self.__client.get(url, **kwargs)
         models_list = []
         for obj in response.json():
-            if obj.get('onModeration') or obj.get('onDebug'):
+            if obj.get('onDebug'):
                 continue
             try:
                 models_list.append(model(**obj))

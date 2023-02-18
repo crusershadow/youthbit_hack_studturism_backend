@@ -17,7 +17,7 @@ from asyncpg.exceptions import UniqueViolationError
 from .tables._studturism_meta import studturism_meta
 from .tables.geography import districts, regions, cities
 from .tables.university import universities
-from .tables.dormitory import dormitories
+from .tables.dormitory import dormitories, meal_plans, rules, rooms
 from .tables.user import users
 from .tables import Schemas
 # endregion
@@ -26,6 +26,11 @@ from .tables import Schemas
 from models.geography.district import DistrictCreate, District
 from models.geography.region import RegionCreate, Region
 from models.geography.city import CityCreate, City
+
+from models.dormitory.dormitory import DormitoryCreate, Dormitory
+from models.dormitory.room import RoomCreate, Room
+from models.dormitory.rules import RuleCreate, Rule
+from models.dormitory.meal_plan import MealPlanCreate, MealPlan
 
 from models.university import UniversityCreate, University
 
@@ -76,13 +81,15 @@ class _PreparedSQLStatements:
 
 class StudturismDatabase:
 
-    def __init__(self, async_engine: AsyncEngine, sync_engine: Engine):
+    def __init__(self, async_engine: AsyncEngine, sync_engine: Engine, *, reset_database_: bool = False):
         self.__async_engine = async_engine
         self.__sync_engine = sync_engine
 
         self.__meta: MetaData = studturism_meta
-        #self.__meta.drop_all(bind=self.__sync_engine)
-        # logger.info('Database was dropped')
+        if reset_database_ is True:
+            self.__meta.drop_all(bind=self.__sync_engine)
+            logger.info('Database was dropped')
+
         logger.debug('Setting up database...')
         self.__create_schemas()
         logger.debug('Schemas initialized')
@@ -157,8 +164,9 @@ class StudturismDatabase:
 
         try:
             return full_entity_model(**params, **result.mappings().fetchone())
-        except Exception:
-            logger.error(f'{err}')
+        except Exception as err:
+            raise err
+
 
     async def create_district(self, district_create: DistrictCreate) -> District:
         return await self.__create_entity(
@@ -199,6 +207,59 @@ class StudturismDatabase:
             select(universities.c.uni_id).where(universities.c.uni_name == bindparam('uni_name')).limit(1)
         )
 
+    async def create_meal_plan(self, meal_plan_create: MealPlanCreate) -> MealPlan:
+        m_dict = meal_plan_create.dict()
+        return await self.__create_entity(
+            insert(meal_plans).values(meal_plan_name=bindparam('meal_plan_name')).returning(meal_plans.c.meal_plan_id),
+            m_dict,
+            MealPlan,
+            select(meal_plans.c.meal_plan_id).where(meal_plans.c.meal_plan_name == bindparam('meal_plan_name'))
+        )
+
+    async def create_rule(self, rule_create: RuleCreate) -> Rule:
+        return await self.__create_entity(
+            insert(rules).values(
+                required_uni_documents=bindparam('required_uni_documents'),
+                required_student_documents=bindparam('required_student_documents'),
+                committee_name=bindparam('committee_name'),
+                committee_email=bindparam('committee_email'),
+                committee_phone=bindparam('committee_phone')),
+            rule_create.dict(),
+            Rule,
+            select(rules).where(
+                required_uni_documents=bindparam('required_uni_documents'),
+                required_student_documents=bindparam('required_student_documents'),
+                committee_name=bindparam('committee_name'),
+                committee_email=bindparam('committee_email'),
+                committee_phone=bindparam('committee_phone'))
+        )
+
+    async def create_dormitory(self, dormitory_create: DormitoryCreate) -> Dormitory:
+        return await self.__create_entity(
+            insert(dormitories).values(
+                university_id=bindparam('university_id'),
+                meal_plan_id=bindparam('meal_plan_id'),
+                rule_id=bindparam('rule_id'),
+                dor_name=bindparam('dor_name'),
+                dor_street_name=bindparam('dor_street_name'),
+                dor_street_house_number=bindparam('dor_street_house_number'),
+                dor_visit_min_max_days=bindparam('dor_visit_min_max_days'),
+                dor_lat=bindparam('dor_lat'),
+                dor_lng=bindparam('dor_lng'),
+                dor_photos_links=bindparam('dor_photos_links'),
+                dor_documents_links=bindparam('dor_documents_links'),
+            ).returning(dormitories.c.dor_id),
+            dormitory_create.dict(),
+            Dormitory,
+            select(dormitories.c.dor_id).where(
+                dormitories.c.university_id == bindparam('university_id'),
+                dormitories.c.dor_name == bindparam('dor_name')
+            )
+        )
+
+    async def create_service(self):
+        pass
+
     async def register_user(self, email: str, password_hash: str) -> User:
         """
         :param email:
@@ -233,6 +294,9 @@ class StudturismDatabase:
 
     async def get_universities(self) -> List[University]:
         return await self.__select_models_as_result(select(universities), University)
+
+    async def get_dormitories(self) -> List[Dormitory]:
+        return await self.__select_models_as_result(select(dormitories), Dormitory)
 
     async def get_dormitories_by_university_id(self, university_id: int) -> List[University]:
         return

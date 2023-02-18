@@ -4,7 +4,7 @@ from sqlalchemy import Table
 from .geography import districts, regions, cities
 from .user import users, achievements, achievements_to_users
 from .university import universities
-from .dormitory import dormitories, meal_plans, rules
+from .dormitory import dormitories, meal_plans, rules, rooms
 
 from ._schemas import Schemas
 
@@ -18,7 +18,7 @@ table_groups = {
     Schemas.geography: (districts, regions, cities),
     Schemas.user: (users, achievements, achievements_to_users),
     Schemas.university: (universities,),
-    Schemas.dormitory: (dormitories, meal_plans, rules)
+    Schemas.dormitory: (dormitories, meal_plans, rules, rooms)
 }
 
 for schema, table_group in table_groups.items():

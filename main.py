@@ -16,6 +16,7 @@ from models.user import User, UserCreate
 
 from config.config import PostgreSQLConfig
 
+
 postgres_config = PostgreSQLConfig.from_json_config('./config/postgresql.json')
 studturism_database = StudturismDatabase(async_engine=postgres_config.async_engine, sync_engine=postgres_config.sync_engine)
 
@@ -160,10 +161,17 @@ from models.university import University
 
 @app.get('/universities/all')
 async def get_all_universities():
-    return [m.dict() for m in await studturism_database.get_universities()]
+    u = [m.dict() for m in await studturism_database.get_universities()]
+    return {'total_count': len(u), 'universities': u}
 
 # endregion
 
+# region Dormitories
+@app.get('/dormitories/all')
+async def get_all_dormitories():
+    d = [d.dict() for d in await studturism_database.get_dormitories()]
+    return {'total_count': len(d), 'dormitories': d}
+# endregion
 
 #
 # @app.post('/create/user', status_code=201)
