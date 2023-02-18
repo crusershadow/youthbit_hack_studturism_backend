@@ -188,15 +188,15 @@ class StudturismDatabase:
         return await self.__create_entity(
             insert(universities).values(
                 city_id=bindparam('city_id'),
-                uni_name=bindparam('name'),
-                uni_admin_contacts=bindparam('admin_contacts'),
-                uni_photo_link=bindparam('photo_link'),
-                uni_site=bindparam('site'),
-                uni_committee=bindparam('committee')
+                uni_name=bindparam('uni_name'),
+                uni_admin_contacts=bindparam('uni_admin_contacts'),
+                uni_photo_link=bindparam('uni_photo_link'),
+                uni_site=bindparam('uni_site'),
+                uni_committee=bindparam('uni_committee')
             ).returning(universities.c.uni_id),
             university_create.dict(),
             University,
-            select(universities.c.uni_id).where(universities.c.uni_name == bindparam('name')).limit(1)
+            select(universities.c.uni_id).where(universities.c.uni_name == bindparam('uni_name')).limit(1)
         )
 
     async def register_user(self, email: str, password_hash: str) -> User:

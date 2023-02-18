@@ -14,14 +14,12 @@ from studturism_database.exc import BaseStudturismDatabaseError, EntityAlreadyEx
 
 from models.user import User, UserCreate
 
-# app = FastAPI(debug=True, title='Studturism')
+from config.config import PostgreSQLConfig
 
-studturism_database = StudturismDatabase(
-    create_async_engine('postgresql+asyncpg://postgres:postgres@localhost:5432/studturism'),
-    create_engine('postgresql://postgres:postgres@localhost:5432/studturism')
-)
+postgres_config = PostgreSQLConfig.from_json_config('./config/postgresql.json')
+studturism_database = StudturismDatabase(async_engine=postgres_config.async_engine, sync_engine=postgres_config.sync_engine)
 
-# region Tutorial
+
 from datetime import datetime, timedelta
 from typing import Union
 
@@ -31,22 +29,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-# to get a string like this run:
-# openssl rand -hex 32
+
 SECRET_KEY = "d73283a96f7413d600c8b8782d2f433e6b15f3d21939c772e0fb5790a8718024"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-
-fake_users_db = {
-    "crusershadow": {
-        "username": "crusershadow",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-    }
-}
 
 
 class Token(BaseModel):

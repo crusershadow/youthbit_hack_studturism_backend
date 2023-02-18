@@ -78,8 +78,10 @@ class StudturismSiteReflector:
 
     async def _reflect_universities_part(self, ):
         api_universities: List[UniversityAPIModel] = await self.__api_client.get_all_universities()
-        pprint(api_universities)
+        # pprint(api_universities)
+        print(f'reflecting districts')
         districts: List[District] = await self.__reflect_districts(self.__make_districts(api_universities))
+        print()
         regions: List[Region] = await self.__reflect_regions(self.__make_regions({d.district_name: d.district_id for d
                                                                                   in districts}, api_universities))
         cities: List[City] = await self.__reflect_cities(self.__make_cities({r.region_name: r.region_id for r in
@@ -101,9 +103,12 @@ class StudturismSiteReflector:
 
 
 async def main():
-    a_engine = create_async_engine('postgresql+asyncpg://postgres:postgres@localhost:5432/studturism')
-    engine = create_engine('postgresql://postgres:postgres@localhost:5432/studturism')
-    s = StudturismSiteReflector(studturism_database=StudturismDatabase(async_engine=a_engine, sync_engine=engine))
+    from config.config import PostgreSQLConfig
+    p_config = PostgreSQLConfig.from_json_config('../config/postgresql.json')
+    s = StudturismSiteReflector(studturism_database=StudturismDatabase(
+        async_engine=p_config.async_engine,
+        sync_engine=p_config.sync_engine
+    ))
     await s.reflect()
     return
 
