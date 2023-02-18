@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer
 from studturism_database import StudturismDatabase
 from studturism_database.exc import BaseStudturismDatabaseError, EntityAlreadyExistsError
 
-from models.user import UserInDB, UserCreate
+from models.user import User, UserCreate
 
 # app = FastAPI(debug=True, title='Studturism')
 
@@ -64,6 +64,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
+@app.get('/')
+async def root():
+    return {'hello': 'world'}
 
 # region Auth
 def verify_password(plain_password, hashed_password):
@@ -97,7 +100,7 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -120,7 +123,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     return user
 
 
-async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)) -> UserInDB:
+async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_public:
         raise HTTPException(status_code=400, detail="Not public user")
     return current_user
@@ -143,7 +146,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post('/users/register', response_model=UserInDB)
+@app.post('/users/register', response_model=User)
 async def create_user(user_create: UserCreate):
     try:
         return await register_user(user_create.email, user_create.password)
@@ -154,20 +157,26 @@ async def create_user(user_create: UserCreate):
         )
 
 
-@app.get("/users/me/", response_model=UserInDB)
-async def read_users_me(current_user: UserInDB = Depends(get_current_active_user)):
+@app.get("/users/me/", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
     return current_user
 
 
 @app.get("/users/me/items/")
-async def read_own_items(current_user: UserInDB = Depends(get_current_active_user)):
+async def read_own_items(current_user: User = Depends(get_current_active_user)):
     return [{"item_id": "Foo", "owner": current_user.email}]
 # endregion
 
 
-@app.get('/')
-async def root():
-    return {'response': 'Hello world!'}
+# region Universities
+from models.university import University
+
+
+@app.get('/universities/all')
+async def get_all_universities():
+    return [m.dict() for m in await studturism_database.get_universities()]
+
+# endregion
 
 
 #

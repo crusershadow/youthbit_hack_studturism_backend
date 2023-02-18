@@ -48,9 +48,9 @@ class StudturismSiteReflector:
     def __make_universities(cities_names_to_ids: Dict[str, int], universities: Iterable[UniversityAPIModel]):
         return [
             UniversityCreate(
-                city_id=cities_names_to_ids[u.details.city], name=u.details.name,
-                admin_contacts=u.details.admin_contacts, photo_link=u.details.photo, site=u.details.site,
-                committee=u.details.committee
+                city_id=cities_names_to_ids[u.details.city], uni_name=u.details.name,
+                uni_admin_contacts=u.details.admin_contacts, uni_photo_link=u.details.photo, uni_site=u.details.site,
+                uni_committee=u.details.committee
             ) for u in universities
         ]
     # endregion
@@ -76,16 +76,22 @@ class StudturismSiteReflector:
     async def __reflect_universities(self, universities: List[UniversityCreate]):
         return await self.__reflect_base(self.__database.create_university, universities)
 
-    async def reflect(self):
+    async def _reflect_universities_part(self, ):
         api_universities: List[UniversityAPIModel] = await self.__api_client.get_all_universities()
         pprint(api_universities)
         districts: List[District] = await self.__reflect_districts(self.__make_districts(api_universities))
-        regions: List[Region] = await self.__reflect_regions(self.__make_regions({d.district_name: d.district_id for d in districts}, api_universities))
-        cities: List[City] = await self.__reflect_cities(self.__make_cities({r.region_name: r.region_id for r in regions}, api_universities))
+        regions: List[Region] = await self.__reflect_regions(self.__make_regions({d.district_name: d.district_id for d
+                                                                                  in districts}, api_universities))
+        cities: List[City] = await self.__reflect_cities(self.__make_cities({r.region_name: r.region_id for r in
+                                                                             regions}, api_universities))
 
         universities: List[University] = await self.__reflect_universities(
             self.__make_universities({c.city_name: c.city_id for c in cities}, api_universities)
         )
+        return universities
+
+    async def reflect(self):
+        universities = await self._reflect_universities_part()
         pprint(universities)
 
 

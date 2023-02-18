@@ -12,7 +12,7 @@ class UserCreate(BaseModel):
     password: str
 
 
-class UserInDB(BaseStudturismModel):
+class User(BaseStudturismModel):
     user_id: int
     email: str
     password_hash: str
@@ -22,7 +22,3 @@ class UserInDB(BaseStudturismModel):
     gender: str = None
     registration_date: date
     is_public: bool
-
-    @property
-    def id(self):
-        return self.user_id

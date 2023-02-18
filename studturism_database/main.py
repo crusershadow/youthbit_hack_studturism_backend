@@ -1,5 +1,6 @@
 from typing import Optional, Type, Tuple, Dict, Iterable, Union, Any, List
 
+from pprint import pprint
 from pydantic import BaseModel
 from loguru import logger
 
@@ -28,7 +29,7 @@ from models.geography.city import CityCreate, City
 
 from models.university import UniversityCreate, University
 
-from models.user import UserCreate, UserInDB
+from models.user import UserCreate, User
 # endregion
 
 # region Errors
@@ -80,23 +81,21 @@ class StudturismDatabase:
         self.__sync_engine = sync_engine
 
         self.__meta: MetaData = studturism_meta
-        self.__meta.drop_all(bind=self.__sync_engine)
-        logger.info('Database was dropped')
+        #self.__meta.drop_all(bind=self.__sync_engine)
+        # logger.info('Database was dropped')
         logger.debug('Setting up database...')
         self.__create_schemas()
+        logger.debug('Schemas initialized')
         self.__meta.create_all(bind=self.__sync_engine)
         logger.debug('Database was successfully set up')
 
     # region Other
     def __create_schemas(self):
-        print('creating schemas')
         from sqlalchemy.schema import CreateSchema
         with self.__sync_engine.connect() as conn:
             for schema in Schemas:
                 conn.execute(CreateSchema(schema.name, if_not_exists=True))
-
             conn.commit()
-        print(f'schemas was successfully created')
     # endregion
 
     # region Statements Execution
@@ -200,7 +199,7 @@ class StudturismDatabase:
             select(universities.c.uni_id).where(universities.c.uni_name == bindparam('name')).limit(1)
         )
 
-    async def register_user(self, email: str, password_hash: str) -> UserInDB:
+    async def register_user(self, email: str, password_hash: str) -> User:
         """
         :param email:
         :param password_hash:
@@ -210,33 +209,33 @@ class StudturismDatabase:
         return await self.__create_entity(
             insert(users).values(email=bindparam('email'), password_hash=bindparam('password_hash')).returning(users.c.user_id),
             params={'email': email, 'password_hash': password_hash},
-            full_entity_model=UserInDB
+            full_entity_model=User
         )
 
     # endregion
 
     # region Get
-    async def __select_all_cols_via_equal_stmt(self, table: Table, columns: Iterable, limit: int = 50):
-        async with self.__async_engine.connect() as conn:
-            stmt = _PreparedSQLStatements.generate_select_all_columns_stmt(table, columns, limit=limit)
-            print(stmt)
-            result = await conn.execute(stmt)
-            return result
+    @staticmethod
+    def __generate_columns_equal_expressions(table, params: Dict[str, Any]):
+        return (table.c[col_name] == value for col_name, value in params.items())
 
-    async def __get_full_entity_by_equal_stmt(self, table: Table, entity_model_class: Type[BaseModel], **columns_equal_stmt):
-        result = await self.__select_all_cols_via_equal_stmt(
-            table,
-            (table.c[col] == value for col, value in columns_equal_stmt.items())
-        )
-
-        return entity_model_class(**result.mappings().fetchone())
+    async def __select_models_as_result(self, select_stmt, model_class: Type, ):
+        result = (await self.__select(select_stmt)).mappings().fetchall()
+        # pprint(result)
+        return [model_class(**row) for row in result]
 
     async def get_district(self, **districts_params) -> District:
-        return await self.__select(selcet(districts).where())
+        return await self.__select(select(districts).where())
 
-    async def get_user(self, **users_params) -> UserInDB:
-        result = await self.__select(select(users).where(*(users.c[col_name] == value for col_name, value in users_params.items())).limit(1))
-        return UserInDB(**result.mappings().fetchone())
+    async def get_user(self, **users_params) -> User:
+        result = await self.__select(select(users).where(*self.__generate_columns_equal_expressions(users, users_params)).limit(1))
+        return User(**result.mappings().fetchone())
+
+    async def get_universities(self) -> List[University]:
+        return await self.__select_models_as_result(select(universities), University)
+
+    async def get_dormitories_by_university_id(self, university_id: int) -> List[University]:
+        return
     # endregion
 
     # def add_university\\\\\](self, University):

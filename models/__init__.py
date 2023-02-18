@@ -1,2 +1,2 @@
 from .university import University
-from .user import UserInDB, UserCreate
+from .user import User, UserCreate
