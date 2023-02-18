@@ -17,7 +17,7 @@ from models.user import User, UserCreate
 from config.config import PostgreSQLConfig
 
 
-postgres_config = PostgreSQLConfig.from_json_config('./config/postgresql.json')
+postgres_config = PostgreSQLConfig.from_json_config('config/postgresql.json')
 studturism_database = StudturismDatabase(async_engine=postgres_config.async_engine, sync_engine=postgres_config.sync_engine)
 
 
@@ -173,6 +173,17 @@ async def get_all_dormitories():
     d = [d.dict() for d in await studturism_database.get_dormitories()]
     return {'total_count': len(d), 'dormitories': d}
 # endregion
+
+
+@app.get('/reflect')
+async def reflect_site():
+    from studturism_site_reflector import StudturismSiteReflector
+    reflector = StudturismSiteReflector(studturism_database)
+    await reflector.reflect()
+    return {'message': 'reflect completed'}
+
+
+
 
 #
 # @app.post('/create/user', status_code=201)
