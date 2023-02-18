@@ -1,0 +1,3 @@
+
+class BaseStudturismDatabaseError(Exception):
+    pass
