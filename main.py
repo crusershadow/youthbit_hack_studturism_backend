@@ -167,6 +167,7 @@ async def get_all_universities():
 # endregion
 
 # region Dormitories
+
 @app.get('/dormitories/all')
 async def get_all_dormitories():
     d = [d.dict() for d in await studturism_database.get_dormitories()]
