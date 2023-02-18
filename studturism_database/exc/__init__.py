@@ -1,0 +1,2 @@
+from ._base_exc import BaseStudturismDatabaseError
+from .already_exists_exc import EntityAlreadyExistsError
