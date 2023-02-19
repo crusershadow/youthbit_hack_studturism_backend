@@ -162,7 +162,7 @@ async def get_all_dormitories():
 
 @app.get('/dormitories/{dor_id}')
 async def get_dormitory(dor_id: int):
-    return studturism_database.get_dormitory(dor_id)
+    return await studturism_database.get_dormitory(dor_id)
 
 
 # @app.get('/dormitories/title/all', response_model=DormitoryTitleInfo)

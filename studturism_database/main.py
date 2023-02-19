@@ -301,7 +301,7 @@ class StudturismDatabase:
         return User(**result.mappings().fetchone())
 
     async def get_university(self, university_id: int) -> University:
-        return await self.__select_one_model_as_result(select(universities).where(universities.c.university_id == university_id).limit(1), University)
+        return await self.__select_one_model_as_result(select(universities).where(universities.c.uni_id == university_id).limit(1), University)
 
     async def get_universities(self) -> DatabaseResponse:
         return await self.__select_models_as_result(select(universities), University)
