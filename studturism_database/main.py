@@ -289,6 +289,10 @@ class StudturismDatabase:
         result = (await self.__select(select_stmt)).mappings().fetchall()
         return DatabaseResponse([model_class(**row) for row in result])
 
+    async def __select_one_model_as_result(self, select_stmt, model_class: Type):
+        result = (await self.__select(select_stmt)).mappings().fetchone()
+        return model_class(**result)
+
     async def get_district(self, **districts_params) -> District:
         return await self.__select(select(districts).where())
 
@@ -296,8 +300,14 @@ class StudturismDatabase:
         result = await self.__select(select(users).where(*self.__generate_columns_equal_expressions(users, users_params)).limit(1))
         return User(**result.mappings().fetchone())
 
+    async def get_university(self, university_id: int) -> University:
+        return await self.__select_one_model_as_result(select(universities).where(universities.c.university_id == university_id).limit(1), University)
+
     async def get_universities(self) -> DatabaseResponse:
         return await self.__select_models_as_result(select(universities), University)
+
+    async def get_dormitory(self, dor_id: int):
+        return await self.__select_one_model_as_result(select(dormitories).where(dormitories.c.dor_id == dor_id), Dormitory)
 
     async def get_dormitories(self) -> DatabaseResponse:
         return await self.__select_models_as_result(select(dormitories), Dormitory)
@@ -307,14 +317,14 @@ class StudturismDatabase:
             select(dormitories.c.dor_id, dormitories.c.dor_visit_min_max_days, meal_plans.c.meal_plan_name, cities.c.city_name, )
         )
 
-    async def get_dormitories_by_university_id(self, university_id: int) -> List[University]:
-        return
-
-    async def get_cities_by_id(self, *cities_ids: int):
-        return await self.__select_models_as_result(select(cities).where(cities.c.city_id == any_(array(cities_ids))))
+    async def get_dormitories_by_university_id(self, university_id: int) -> DatabaseResponse:
+        return await self.__select_models_as_result(select(dormitories).where(dormitories.c.university_id == university_id), Dormitory)
 
     async def get_cities(self):
         return await self.__select_models_as_result(select(cities), City)
+
+    async def get_city(self, city_id: int):
+        return await self.__select_one_model_as_result(select(cities).where(cities.c.city_id == city_id), City)
     # endregion
 
     # def add_university\\\\\](self, University):

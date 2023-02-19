@@ -145,21 +145,29 @@ async def create_user(user_create: UserCreate):
 
 @app.get('/universities/all')
 async def get_all_universities():
-    u = [m.dict() for m in await studturism_database.get_universities()]
-    return {'total_count': len(u), 'universities': u}
+    return await studturism_database.get_universities()
+
+
+@app.get('/universities/{university_id}')
+async def get_university(university_id: int):
+    return await studturism_database.get_university(university_id)
 
 # endregion
 
 # region Dormitories
-
 @app.get('/dormitories/all')
 async def get_all_dormitories():
-    d = [d.dict() for d in await studturism_database.get_dormitories()]
-    return {'total_count': len(d), 'dormitories': d}
+    return await studturism_database.get_dormitories()
 
-@app.get('/dormitories/title/all', response_model=DormitoryTitleInfo)
-async def get_all_dormitories_titles():
-    dormitories = studturism_database.get_dormitories()
+
+@app.get('/dormitories/{dor_id}')
+async def get_dormitory(dor_id: int):
+    return studturism_database.get_dormitory(dor_id)
+
+
+# @app.get('/dormitories/title/all', response_model=DormitoryTitleInfo)
+# async def get_all_dormitories_titles():
+#     dormitories = studturism_database.get_dormitories()
 
 # endregion
 
@@ -168,6 +176,9 @@ async def get_all_dormitories_titles():
 async def get_all_cities():
     return await studturism_database.get_cities()
 
+@app.get('/cities/{city_id}')
+async def get_city(city_id: int):
+    return await studturism_database.get_city(city_id)
 # endregion
 
 
