@@ -133,7 +133,6 @@ class StudturismSiteReflector:
         universities_names: Dict[str, int] = {uni.uni_name: uni.uni_id for uni in universities}
 
         dormitories = await self._reflect_dormitories_part({uni.id: universities_names[uni.details.name] for uni in universities_api_models})
-        # pprint(dormitories)
         logger.info('Site reflected')
         # districts = await self.__reflect_districts(districts=self.__make_districts_from_universities(universities))
         # print(districts)

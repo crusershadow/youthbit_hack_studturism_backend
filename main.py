@@ -1,26 +1,3 @@
-from typing import List, Dict, Union
-
-from pydantic import BaseModel
-
-from sqlalchemy.engine import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine
-
-from fastapi import FastAPI, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-
-
-from studturism_database import StudturismDatabase
-from studturism_database.exc import BaseStudturismDatabaseError, EntityAlreadyExistsError
-
-from models.user import User, UserCreate
-
-from config.config import PostgreSQLConfig
-
-
-postgres_config = PostgreSQLConfig.from_json_config('config/postgresql.json')
-studturism_database = StudturismDatabase(async_engine=postgres_config.async_engine, sync_engine=postgres_config.sync_engine)
-
-
 from datetime import datetime, timedelta
 from typing import Union
 
@@ -29,6 +6,24 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
+
+
+from studturism_database import StudturismDatabase
+from studturism_database.exc import BaseStudturismDatabaseError, EntityAlreadyExistsError
+
+from models.user import User, UserCreate
+
+from send_models.dormitory import DormitoryTitleInfo
+
+from config.config import PostgreSQLConfig
+
+
+postgres_config = PostgreSQLConfig.from_json_config('config/postgresql.json')
+studturism_database = StudturismDatabase(async_engine=postgres_config.async_engine, sync_engine=postgres_config.sync_engine)
+
+
+
+
 
 
 SECRET_KEY = "d73283a96f7413d600c8b8782d2f433e6b15f3d21939c772e0fb5790a8718024"
@@ -143,21 +138,10 @@ async def create_user(user_create: UserCreate):
             detail='Email is already registered',
         )
 
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "Foo", "owner": current_user.email}]
 # endregion
 
 
 # region Universities
-from models.university import University
-
 
 @app.get('/universities/all')
 async def get_all_universities():
@@ -172,6 +156,18 @@ async def get_all_universities():
 async def get_all_dormitories():
     d = [d.dict() for d in await studturism_database.get_dormitories()]
     return {'total_count': len(d), 'dormitories': d}
+
+@app.get('/dormitories/title/all', response_model=DormitoryTitleInfo)
+async def get_all_dormitories_titles():
+    dormitories = studturism_database.get_dormitories()
+
+# endregion
+
+# region Cities
+@app.get('/cities/all')
+async def get_all_cities():
+    return await studturism_database.get_cities()
+
 # endregion
 
 
@@ -182,41 +178,3 @@ async def reflect_site():
     await reflector.reflect()
     return {'message': 'reflect completed'}
 
-
-
-
-#
-# @app.post('/create/user', status_code=201)
-# async def register_user(user_register: UserCreate):
-#     result = await database.add_user(user_create=user_register)
-#     return {'user': 'created'}
-#
-#
-# @app.get('/search/universities')
-# async def search_university(q: str):
-#     return {'found_query': f'{q}+1'}
-#
-#
-# @app.get('/search/dormitories')
-# async def search_dormitory(q: str):
-#     return {'found_query': f'{q}+2'}
-#
-#
-# @app.get('/search/events')
-# async def search_events(q: str):
-#     return
-#
-#
-# @app.get('/universities/{university_id}')
-# async def get_university(university_id: str):
-#     return
-#
-#
-# @app.get('/dormitories/{dormitory_id}')
-# async def get_dormitory(dormitory_id: str):
-#     return
-#
-#
-# @app.get('/rooms/{room_id}')
-# async def get_room(room_id: str):
-#     return

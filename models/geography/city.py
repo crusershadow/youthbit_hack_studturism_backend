@@ -7,4 +7,8 @@ class CityCreate(BaseModel):
 
 
 class City(CityCreate):
+
+    class Config:
+        extra = 'allow'
+
     city_id: int

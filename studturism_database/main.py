@@ -6,11 +6,12 @@ from loguru import logger
 
 from sqlalchemy import MetaData, Table, Column
 from sqlalchemy.engine import Engine
-from sqlalchemy.sql import select, insert, update, delete, bindparam, text
+from sqlalchemy.sql import select, insert, update, delete, join, bindparam, text, any_
+from sqlalchemy.dialects.postgresql import array
+from sqlalchemy.sql.expression import any_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncConnection, AsyncResult, AsyncMappingResult
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from psycopg2.errors import UniqueViolation
 from asyncpg.exceptions import UniqueViolationError
 
 # region Tables
@@ -37,10 +38,14 @@ from models.university import UniversityCreate, University
 from models.user import UserCreate, User
 # endregion
 
+# region SendModels
+from send_models.dormitory import DormitoryTitleInfo
+# endregion
+
+from .response import DatabaseResponse
+
 # region Errors
 from .exc import BaseStudturismDatabaseError, EntityAlreadyExistsError
-
-
 # endregion
 
 class _PreparedSQLStatements:
@@ -282,8 +287,7 @@ class StudturismDatabase:
 
     async def __select_models_as_result(self, select_stmt, model_class: Type, ):
         result = (await self.__select(select_stmt)).mappings().fetchall()
-        # pprint(result)
-        return [model_class(**row) for row in result]
+        return DatabaseResponse([model_class(**row) for row in result])
 
     async def get_district(self, **districts_params) -> District:
         return await self.__select(select(districts).where())
@@ -292,14 +296,25 @@ class StudturismDatabase:
         result = await self.__select(select(users).where(*self.__generate_columns_equal_expressions(users, users_params)).limit(1))
         return User(**result.mappings().fetchone())
 
-    async def get_universities(self) -> List[University]:
+    async def get_universities(self) -> DatabaseResponse:
         return await self.__select_models_as_result(select(universities), University)
 
-    async def get_dormitories(self) -> List[Dormitory]:
+    async def get_dormitories(self) -> DatabaseResponse:
         return await self.__select_models_as_result(select(dormitories), Dormitory)
+
+    async def get_dormitories_titles_info(self):
+        result = await self.__select(
+            select(dormitories.c.dor_id, dormitories.c.dor_visit_min_max_days, meal_plans.c.meal_plan_name, cities.c.city_name, )
+        )
 
     async def get_dormitories_by_university_id(self, university_id: int) -> List[University]:
         return
+
+    async def get_cities_by_id(self, *cities_ids: int):
+        return await self.__select_models_as_result(select(cities).where(cities.c.city_id == any_(array(cities_ids))))
+
+    async def get_cities(self):
+        return await self.__select_models_as_result(select(cities), City)
     # endregion
 
     # def add_university\\\\\](self, University):
